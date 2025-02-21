@@ -25,7 +25,7 @@ def get_integrationjson( request : Request):
                 "Supports different programming languages.",
                 "Posts updates to a Telex channel at set intervals."
             ],
-            "integration_category": "Productivity Tool integratons",
+            "integration_category": "Communication & Collaboration",
             "author": "Ayomide Ibitola",
             "settings": [
                 {
