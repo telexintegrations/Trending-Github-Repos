@@ -1,11 +1,14 @@
-from fastapi import APIRouter,Request,status,HTTPException,BackgroundTasks
+from fastapi import APIRouter, Request, status, HTTPException, BackgroundTasks
 import httpx
-router = APIRouter()
+import asyncio  # Needed to run async functions in background tasks
 
-@router.get("/integration.json",status_code= status.HTTP_200_OK)
-def get_integrationjson( request : Request):
+router = APIRouter()
+Telex_webhook_url = "https://ping.telex.im/v1/webhooks/019510e6-02c2-715b-ada4-18d85b07c37e"
+
+@router.get("/integration.json", status_code=status.HTTP_200_OK)
+def get_integrationjson(request: Request):
     base_url = str(request.base_url).rstrip("/")
-    return{
+    return {
         "data": {
             "date": {
                 "created_at": "2025-02-21",
@@ -38,55 +41,74 @@ def get_integrationjson( request : Request):
                     "label": "Interval",
                     "type": "text",
                     "required": True,
-                    "default": " 59* * * *"  
+                    "default": "59 * * * *"
                 }
             ],
             "target_url": "",
             "tick_url": f"{base_url}/tick",
         }
     }
+
 @router.get("/test")
-async def get_github_trending_repos( language = "python"):
+async def get_github_trending_repos(language: str = "python"):
     url = f"https://github-trending-api.de.a9sapp.eu/repositories?language={language}&since=daily"
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(url)
-            if response.status_code==200:
+            if response.status_code == 200:
                 repos = response.json()[:5]
+                
+                # Debugging: Ensure we see what GitHub API returns
+                print("GitHub API Response:", repos)
+
                 return {
                     "trending_repositories": [
-                        {   
-                            "💻name": repo["name"],
-                            "👨author": repo["author"],
-                            "📦description": repo["description"],
-                            "⭐stars": repo["stars"],
-                            "🍴forks": repo["forks"],
-                            "🔗url": repo["url"]
+                        {
+                            "💻name": repo.get("name", "Unknown Repo"),
+                            "👨author": repo.get("author", "Unknown Author"),
+                            "📦description": repo.get("description", "No description available"),
+                            "⭐stars": repo.get("stars", 0),
+                            "🍴forks": repo.get("forks", 0),
+                            "🔗url": repo.get("url", "#")
                         }
-                    for repo in repos
-                  ]
+                        for repo in repos
+                    ]
                 }
-            return[ " Error: Unable to fetch trending repos"]
+            raise HTTPException(status_code=response.status_code, detail="Error: Unable to fetch trending repos")
     except Exception as e:
-        return[f"Error: {str(e)}"]
-    
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 async def send_trending_repos(payload):
-    language = payload.get("settings",{}).get("Language","python")
+    language = payload.get("settings", {}).get("Language", "python")
     repos = await get_github_trending_repos(language)
-    message = " 🤖 Trending GitHub Repositories 🤖\n\n" + "\n\n".join(repos)
 
-    data={
-        "event_name":"github_trending_repos",
-        "status":"success",
-        "message":message,
-        "username":"Github Trends Bot"
+    # Extract repositories safely
+    trending_repos = repos.get("trending_repositories", [])
+
+    # Handle case where no repos are found
+    if not trending_repos:
+        message = "🚨 No trending repositories found for the selected language."
+    else:
+        message = "🤖 Trending GitHub Repositories 🤖\n\n" + "\n\n".join(
+            [f"💻 {repo['💻name']} - ⭐ {repo['⭐stars']}\n🔗 {repo['🔗url']}" for repo in trending_repos]
+        )
+
+    data = {
+        "event_name": "github_trending_repos",
+        "status": "success",
+        "message": message,
+        "username": "Github Trends Bot"
     }
-
+    
     async with httpx.AsyncClient() as client:
-        await client.post(payload["return_url"],json=data)
+        response = await client.post(Telex_webhook_url, json=data)
+        print("Telex API Response:", response.status_code, response.text)
 
-@router.post("/tick",status_code=status.HTTP_202_ACCEPTED)
-def trigger_trending_repos(payload:dict , background_tasks: BackgroundTasks):
-    background_tasks.add_task(send_trending_repos, payload)
-    return{"status":"Accepted"}
+# Wrapper to run async function in a background task
+def send_trending_repos_wrapper(payload):
+    asyncio.run(send_trending_repos(payload))
+
+@router.post("/tick", status_code=status.HTTP_202_ACCEPTED)
+def trigger_trending_repos(payload: dict, background_tasks: BackgroundTasks):
+    background_tasks.add_task(send_trending_repos_wrapper, payload)
+    return {"status": "Accepted"}
