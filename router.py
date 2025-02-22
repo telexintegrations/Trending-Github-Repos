@@ -1,11 +1,19 @@
 from fastapi import APIRouter, Request, status, HTTPException, BackgroundTasks
 import httpx
-import asyncio  # Needed to run async functions in background tasks
+import asyncio  
 import os
+from pydantic import BaseModel
 
 
 router = APIRouter()
 Telex_webhook_url = os.getenv("TELEX_WEBHOOK_URL")
+
+
+class Payload(BaseModel):
+    event_name: str
+    status: str
+    message: str
+    username: str
 
 
 @router.get("/integration.json", status_code=status.HTTP_200_OK)
@@ -47,10 +55,25 @@ def get_integrationjson(request: Request):
                     "default": "59 * * * *"
                 }
             ],
-            "target_url": "",
+            "target_url": f"{base_url}/receive",
             "tick_url": f"{base_url}/tick",
         }
     }
+@router.post("/receive", status_code=200)
+async def receive_data(payload: Payload):
+    # Access the data directly from the payload object
+    event_name = payload.event_name
+    status = payload.status
+    message = payload.message
+    username = payload.username
+
+    
+    print(f"Received event: {event_name}, status: {status}")
+    print(f"Message: {message}")
+    print(f"From user: {username}")
+
+    
+    return {"status": "Data received successfully"}
 
 @router.get("/test")
 async def get_github_trending_repos(language: str = "python"):
