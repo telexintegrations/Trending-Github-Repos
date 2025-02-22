@@ -12,60 +12,56 @@ Telex_webhook_url = os.getenv("TELEX_WEBHOOK_URL")
 def get_integrationjson(request: Request):
     base_url = str(request.base_url).rstrip("/")
     return {
-        {
-  "data": {
-    "date": {
-      "created_at": "2025-02-21",
-      "updated_at": "2025-02-21"
-    },
-    "descriptions": {
-      "app_name": "Trending GitHub Repos Tracker",
-      "app_description": "Fetches trending GitHub repositories and shares them on Telex.",
-      "app_logo": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
-      "app_url": f"{base_url}",
-      "background_color": "#24292e"
-    },
-    "integration_category": "Communication & Collaboration",
-    "integration_type": "interval",
-    "is_active": True,
-    "output": [
-      {
-        "label": "Telex Channel",
-        "value": True
-      }
-    ],
-    "key_features": [
-      "Fetches trending GitHub repositories.",
-      "Supports different programming languages.",
-      "Posts updates to a Telex channel at set intervals."
-    ],
-    "permissions": {
-      "monitoring_user": {
-        "always_online": True,
-        "display_name": "Performance Monitor"
-      }
-    },
-    "settings": [
-      {
-        "label": "Language",
-        "type": "text",
-        "required": True,
-        "default": "python"
-      },
-      {
-        "label": "Interval",
-        "type": "text",
-        "required": True,
-        "default": "* * * * *"
-      }
-    ],
-    "tick_url": f"{base_url}/tick",
-    "target_url": ""
-  }
-}
-
+        "data": {
+            "date": {
+                "created_at": "2025-02-21",
+                "updated_at": "2025-02-21"
+            },
+            "descriptions": {
+                "app_name": "Trending GitHub Repos Tracker",
+                "app_description": "Fetches trending GitHub repositories and shares them on Telex.",
+                "app_logo": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+                "app_url": f"{base_url}",
+                "background_color": "#24292e"
+            },
+            "integration_category": "Communication & Collaboration",
+            "integration_type": "interval",
+            "is_active": True,
+            "output": [
+                {
+                    "label": "Telex Channel",
+                    "value": True
+                }
+            ],
+            "key_features": [
+                "Fetches trending GitHub repositories.",
+                "Supports different programming languages.",
+                "Posts updates to a Telex channel at set intervals."
+            ],
+            "permissions": {
+                "monitoring_user": {
+                    "always_online": True,
+                    "display_name": "Performance Monitor"
+                }
+            },
+            "settings": [
+                {
+                    "label": "Language",
+                    "type": "text",
+                    "required": True,
+                    "default": "python"
+                },
+                {
+                    "label": "Interval",
+                    "type": "text",
+                    "required": True,
+                    "default": "* * * * *"
+                }
+            ],
+            "tick_url": f"{base_url}/tick",
+            "target_url": ""
+        }
     }
-    
 
 @router.get("/test")
 async def get_github_trending_repos(language: str = "python"):
