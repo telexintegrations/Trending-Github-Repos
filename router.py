@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request, status, HTTPException, BackgroundTasks
 import httpx
 import asyncio  
 import os
-from .schemas import MonitorPayload
+
 
 router = APIRouter()
 Telex_webhook_url = os.getenv("TELEX_WEBHOOK_URL")
@@ -59,7 +59,7 @@ def get_integrationjson(request: Request):
                 }
             ],
             "tick_url": f"{base_url}/tick",
-            "target_url": ""
+            "target_url": "https://ping.telex.im/v1/webhooks/01952f5c-57f7-7d99-8e89-ee520db0d716"
         }
     }
 
