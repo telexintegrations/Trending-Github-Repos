@@ -6,6 +6,9 @@ import os
 
 router = APIRouter()
 Telex_webhook_url = os.getenv("TELEX_WEBHOOK_URL")
+router.get("/webhook")
+def check_webhook():
+    return {"TELEX_WEBHOOK_URL": os.getenv("TELEX_WEBHOOK_URL")}
 
 @router.get("/integration.json", status_code=status.HTTP_200_OK)
 def get_integrationjson(request: Request):
