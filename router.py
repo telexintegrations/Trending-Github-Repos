@@ -2,15 +2,10 @@ from fastapi import APIRouter, Request, status, HTTPException, BackgroundTasks
 import httpx
 import asyncio  
 import os
-from .schemas import MonitorPayload 
-
 
 
 router = APIRouter()
 Telex_webhook_url = os.getenv("TELEX_WEBHOOK_URL")
-
-
-
 
 
 @router.get("/integration.json", status_code=status.HTTP_200_OK)
@@ -49,14 +44,14 @@ def get_integrationjson(request: Request):
                     "label": "Interval",
                     "type": "text",
                     "required": True,
-                    "default": "* * * * *"
+                    "default": "* * * *"
                 }
             ],
-            "target_url": "",
-            "tick_url": "https://trending-github-repos-1.onrender.com/tick",
+            "target_url": "f{base_url}",
+            "tick_url": f"{base_url}/tick",
         }
     }
-
+    
 
 @router.get("/test")
 async def get_github_trending_repos(language: str = "python"):
@@ -67,7 +62,7 @@ async def get_github_trending_repos(language: str = "python"):
             if response.status_code == 200:
                 repos = response.json()[:5]
                 
-                # Debugging: Ensure we see what GitHub API returns
+                
                 print("GitHub API Response:", repos)
 
                 return {
@@ -87,7 +82,7 @@ async def get_github_trending_repos(language: str = "python"):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
-async def send_trending_repos(payload : MonitorPayload):
+async def send_trending_repos(payload):
     language = payload.get("settings", {}).get("Language", "python")
     repos = await get_github_trending_repos(language)
     
@@ -122,9 +117,9 @@ async def send_trending_repos(payload : MonitorPayload):
 
 
 def send_trending_repos_wrapper(payload):
-    asyncio.run(send_trending_repos(payload))
+       asyncio.create_task(send_trending_repos(payload))
 
 @router.post("/tick", status_code=status.HTTP_202_ACCEPTED)
-def trigger_trending_repos(payload: MonitorPayload, background_tasks: BackgroundTasks):
+def trigger_trending_repos(payload: dict, background_tasks: BackgroundTasks):
     background_tasks.add_task(send_trending_repos_wrapper, payload)
     return {"status": "Accepted"}
