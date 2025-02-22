@@ -4,6 +4,8 @@ import asyncio
 import os
 
 
+
+
 router = APIRouter()
 Telex_webhook_url = os.getenv("TELEX_WEBHOOK_URL")
 
@@ -55,7 +57,7 @@ def get_integrationjson(request: Request):
                     "label": "interval",
                     "type": "text",
                     "required": True,
-                    "default": "* * * *"
+                    "default": "* * * * *"
                 },
                
             ],
