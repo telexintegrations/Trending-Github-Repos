@@ -8,6 +8,11 @@ Trending GitHub Repos Tracker is a FastAPI application that fetches trending Git
  📌Supports different programming languages.
  📌Posts updates to a Telex channel at set intervals.
 
+## Preview
+
+ ![Preview Image](https://raw.githubusercontent.com/telexintegrations/Trending-Github-Repos/refs/heads/main/assets/Screenshot%202025-02-22%20231548.png)
+
+
 ## Endpoints
 
 ### GET /

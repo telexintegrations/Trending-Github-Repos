@@ -57,11 +57,7 @@ def get_integrationjson(request: Request):
                     "required": True,
                     "default": "* * * *"
                 },
-                {
-                    "label": "Tick URL",  
-                    "required": True,
-                    "default": f"{base_url}/tick"
-                },
+               
             ],
             "tick_url": f"{base_url}/tick",
             "target_url": ""
