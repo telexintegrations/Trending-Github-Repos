@@ -52,14 +52,14 @@ def get_integrationjson(request: Request):
                     "default": "python"
                 },
                 {
-                    "label": "Interval",
+                    "label": "interval",
                     "type": "text",
                     "required": True,
-                    "default": "* * * * *"
+                    "default": "* * * *"
                 }
             ],
             "tick_url": f"{base_url}/tick",
-            "target_url": "https://ping.telex.im/v1/webhooks/01952f5c-57f7-7d99-8e89-ee520db0d716"
+            "target_url": ""
         }
     }
 
