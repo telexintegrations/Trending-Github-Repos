@@ -127,7 +127,7 @@ async def send_trending_repos(payload):
 
 
 def send_trending_repos_wrapper(payload):
-       asyncio.create_task(send_trending_repos(payload))
+       asyncio.run(send_trending_repos(payload))
 
 @router.post("/tick", status_code=status.HTTP_202_ACCEPTED)
 def trigger_trending_repos(payload: dict, background_tasks: BackgroundTasks):
