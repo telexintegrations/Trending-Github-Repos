@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Request, status, HTTPException, BackgroundTasks
 import httpx
 import asyncio  # Needed to run async functions in background tasks
+import os
+
 
 router = APIRouter()
-Telex_webhook_url = "https://ping.telex.im/v1/webhooks/019510e6-02c2-715b-ada4-18d85b07c37e"
+Telex_webhook_url = os.getenv("TELEX_WEBHOOK_URL")
 
 @router.get("/integration.json", status_code=status.HTTP_200_OK)
 def get_integrationjson(request: Request):
@@ -81,16 +83,23 @@ async def get_github_trending_repos(language: str = "python"):
 async def send_trending_repos(payload):
     language = payload.get("settings", {}).get("Language", "python")
     repos = await get_github_trending_repos(language)
-
-    # Extract repositories safely
+    
+    
     trending_repos = repos.get("trending_repositories", [])
 
-    # Handle case where no repos are found
+    
     if not trending_repos:
         message = "🚨 No trending repositories found for the selected language."
     else:
         message = "🤖 Trending GitHub Repositories 🤖\n\n" + "\n\n".join(
-            [f"💻 {repo['💻name']} - ⭐ {repo['⭐stars']}\n🔗 {repo['🔗url']}" for repo in trending_repos]
+          [
+            f"💻 {repo['💻name']}\n"
+            f"👨 Author: {repo['👨author']}\n"
+            f"📦 {repo['📦description']}\n"
+            f"⭐ {repo['⭐stars']} | 🍴 {repo['🍴forks']}\n"
+            f"🔗 {repo['🔗url']} "  
+            for repo in repos["trending_repositories"]
+        ]
         )
 
     data = {
@@ -104,7 +113,7 @@ async def send_trending_repos(payload):
         response = await client.post(Telex_webhook_url, json=data)
         print("Telex API Response:", response.status_code, response.text)
 
-# Wrapper to run async function in a background task
+
 def send_trending_repos_wrapper(payload):
     asyncio.run(send_trending_repos(payload))
 
