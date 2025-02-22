@@ -52,7 +52,7 @@ def get_integrationjson(request: Request):
                 }
             ],
             "target_url": "",
-            "tick_url": f"{base_url}/tick",
+            "tick_url": "https://trending-github-repos-1.onrender.com/tick",
         }
     }
 
