@@ -1,14 +1,25 @@
 from fastapi import APIRouter, Request, status, HTTPException, BackgroundTasks
 import httpx
-import asyncio  
 import os
-
-
-
+from pydantic import BaseModel
+from typing import List
 
 router = APIRouter()
-Telex_webhook_url = os.getenv("TELEX_WEBHOOK_URL")
 
+class Setting(BaseModel):
+    label: str
+    type: str
+    required: bool
+    default: str
+
+class MonitorPayload(BaseModel):
+    channel_id: str
+    return_url: str
+    settings: List[Setting]
+
+Telex_webhook_url = os.getenv("TELEX_WEBHOOK_URL")
+if not Telex_webhook_url:
+    raise ValueError("TELEX_WEBHOOK_URL environment variable is not set")
 
 @router.get("/integration.json", status_code=status.HTTP_200_OK)
 def get_integrationjson(request: Request):
@@ -59,7 +70,6 @@ def get_integrationjson(request: Request):
                     "required": True,
                     "default": "* * * * *"
                 },
-               
             ],
             "tick_url": f"{base_url}/tick",
             "target_url": ""
@@ -74,10 +84,6 @@ async def get_github_trending_repos(language: str = "python"):
             response = await client.get(url)
             if response.status_code == 200:
                 repos = response.json()[:5]
-                
-                
-                print("GitHub API Response:", repos)
-
                 return {
                     "trending_repositories": [
                         {
@@ -95,26 +101,24 @@ async def get_github_trending_repos(language: str = "python"):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
-async def send_trending_repos(payload):
-    language = payload.get("settings", {}).get("Language", "python")
+async def send_trending_repos(payload: MonitorPayload):
+    language = next((setting.default for setting in payload.settings if setting.label == "Language"), "python")
     repos = await get_github_trending_repos(language)
     
-    
     trending_repos = repos.get("trending_repositories", [])
-
     
     if not trending_repos:
         message = "🚨 No trending repositories found for the selected language."
     else:
         message = "🤖 Trending GitHub Repositories 🤖\n\n" + "\n\n".join(
-          [
-            f"💻 {repo['💻name']}\n"
-            f"👨 Author: {repo['👨author']}\n"
-            f"📦 {repo['📦description']}\n"
-            f"⭐ {repo['⭐stars']} | 🍴 {repo['🍴forks']}\n"
-            f"🔗 {repo['🔗url']} "  
-            for repo in repos["trending_repositories"]
-        ]
+            [
+                f"💻 {repo['💻name']}\n"
+                f"👨 Author: {repo['👨author']}\n"
+                f"📦 {repo['📦description']}\n"
+                f"⭐ {repo['⭐stars']} | 🍴 {repo['🍴forks']}\n"
+                f"🔗 {repo['🔗url']}"
+                for repo in trending_repos
+            ]
         )
 
     data = {
@@ -124,15 +128,14 @@ async def send_trending_repos(payload):
         "username": "Github Trends Bot"
     }
     
-    async with httpx.AsyncClient() as client:
-        response = await client.post(Telex_webhook_url, json=data)
-        print("Telex API Response:", response.status_code, response.text)
-
-
-def send_trending_repos_wrapper(payload):
-       asyncio.run(send_trending_repos(payload))
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(Telex_webhook_url, json=data)
+            response.raise_for_status()
+    except Exception as e:
+        print(f"Failed to send message to Telex: {str(e)}")
 
 @router.post("/tick", status_code=status.HTTP_202_ACCEPTED)
-def trigger_trending_repos(payload: dict, background_tasks: BackgroundTasks):
-    background_tasks.add_task(send_trending_repos_wrapper, payload)
+def trigger_trending_repos(payload: MonitorPayload, background_tasks: BackgroundTasks):
+    background_tasks.add_task(send_trending_repos, payload)
     return {"status": "Accepted"}
