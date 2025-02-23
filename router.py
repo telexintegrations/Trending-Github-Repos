@@ -130,7 +130,7 @@ async def send_trending_repos(payload: MonitorPayload):
     
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(Telex_webhook_url, json=data)
+            response = await client.post(payload.return_url, json=data)
             response.raise_for_status()
     except Exception as e:
         print(f"Failed to send message to Telex: {str(e)}")
