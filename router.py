@@ -13,9 +13,9 @@ class Setting(BaseModel):
     default: str
 
 class MonitorPayload(BaseModel):
-   
+    channel_id: str
     return_url: str
-    
+    settings: List[Setting]
 
 Telex_webhook_url = os.getenv("TELEX_WEBHOOK_URL")
 if not Telex_webhook_url:
